@@ -1,0 +1,146 @@
+# BNG ContainerLAB
+
+
+name: BNGLAB
+
+mgmt:
+  network: BNGLAB-MGMT                # Management network name
+  ipv4_subnet: 172.100.100.0/24       # IPv4 Range
+  ipv6_subnet: 2001:172:100:100::/80  # IPv6 Range (optional)
+  ipv4-gw: 172.100.100.1              # Set Custom Gateway IP Address
+  ipv6-gw: 2001:172:100:100::1        # Set Custom Gateway IP Address
+  mtu: 1500
+  external-access: true
+
+topology:
+  nodes:
+#-----------------------------------------------------#
+    CORE-P1:
+      kind: vr-sros
+      type: sr-1
+      image: registry.srlinux.dev/pub/vr-sros:21.7.R1 # internal image, external users should build/use their own image
+      license: ./license-21.txt # license file must be obtained from Nokia
+    #-----------------------------------------------------#
+    CORE-P2:
+      kind: vr-sros
+      type: sr-1
+      image: registry.srlinux.dev/pub/vr-sros:21.7.R1 # internal image, external users should build/use their own image
+      license: ./license-21.txt # license file must be obtained from Nokia
+    #-----------------------------------------------------#    
+    BNG-1:
+      kind: vr-sros
+      type: "cp: cpu=4 ram=6 slot=A chassis=SR-3e card=cpm-e ___ lc: cpu=4 ram=6 max_nics=36 slot=1 chassis=SR-3e card=iom-e mda/1=me10-10gb-sfp+ mda/2=isa2-bb"
+      image: registry.srlinux.dev/pub/vr-sros:21.7.R1 # internal image, external users should build/use their own image
+      license: ./license-21.txt # license file must be obtained from Nokia
+    #-----------------------------------------------------#
+    BNG-2:
+      kind: vr-sros
+      type: "cp: cpu=4 ram=6 slot=A chassis=SR-3e card=cpm-e ___ lc: cpu=4 ram=6 max_nics=36 slot=1 chassis=SR-3e card=iom-e mda/1=me10-10gb-sfp+ mda/2=isa2-bb"
+      image: registry.srlinux.dev/pub/vr-sros:21.7.R1 # internal image, external users should build/use their own image
+      license: ./license-21.txt # license file must be obtained from Nokia
+    #-----------------------------------------------------#
+    AGG-1:
+      kind: vr-sros
+      type: sr-1
+      image: registry.srlinux.dev/pub/vr-sros:21.7.R1 # internal image, external users should build/use their own image
+      license: ./license-21.txt # license file must be obtained from Nokia
+    #-----------------------------------------------------#  
+    AGG-2:
+      kind: vr-sros
+      type: sr-1
+      image: registry.srlinux.dev/pub/vr-sros:21.7.R1 # internal image, external users should build/use their own image
+      license: ./license-21.txt # license file must be obtained from Nokia
+    #-----------------------------------------------------#
+    INTERNET:
+      kind: vr-sros
+      type: sr-1
+      image: registry.srlinux.dev/pub/vr-sros:21.7.R1 # internal image, external users should build/use their own image
+      license: ./license-21.txt # license file must be obtained from Nokia
+    #-----------------------------------------------------#    
+    CLIENT-1:
+      kind: linux
+      image: ubuntu:20.04
+    #-----------------------------------------------------#  
+    RADIUS:
+      kind: linux
+      image: ubuntu:20.04
+    #-----------------------------------------------------#   
+
+
+  links:
+    #######################################################
+    ################## Core - Core ########################
+    #######################################################
+    - endpoints: ["CORE-P1:eth1", "CORE-P2:eth1"]
+      vars:
+        port: [1/1/c1, 1/1/c1]
+        clab_link_ip: 10.140.253.0/31
+    #######################################################
+    ################## BNG - INTERNET #####################
+    #######################################################
+    - endpoints: ["BNG-1:eth1", "INTERNET:eth1"]
+      vars:
+        port: [1/1/c1, 1/1/c1]
+        clab_link_ip: 95.107.142.160/30
+    #-----------------------------------------------------#
+    - endpoints: ["BNG-2:eth1", "INTERNET:eth2"]
+      vars:
+        port: [1/1/c1, 1/1/c2]
+        clab_link_ip: 95.107.142.164/30        
+    #######################################################
+    ################## AGG - Core #########################
+    #######################################################
+    - endpoints: ["CORE-P1:eth2", "AGG-1:eth2"]
+      vars:
+        port: [1/1/c2, 1/1/c2]
+        clab_link_ip: 10.140.253.2/31
+    #-----------------------------------------------------#
+    - endpoints: ["CORE-P1:eth3", "AGG-2:eth3"]
+      vars:
+        port: [1/1/c3, 1/1/c3]
+        clab_link_ip: 10.140.253.4/31
+    #-----------------------------------------------------#
+    - endpoints: ["CORE-P2:eth3", "AGG-1:eth3"]
+      vars:
+        port: [1/1/c3, 1/1/c3]
+        clab_link_ip: 10.140.253.6/31
+    #-----------------------------------------------------#
+    - endpoints: ["CORE-P2:eth2", "AGG-2:eth2"]
+      vars:
+        port: [1/1/c2, 1/1/c2]
+        clab_link_ip: 10.140.253.8/31
+    #######################################################
+    ################## BNG - Core #########################
+    #######################################################       
+    - endpoints: ["CORE-P1:eth4", "BNG-1:eth4"]
+      vars:
+        port: [1/1/c4, 1/1/c4]
+        clab_link_ip: 10.140.253.10/31
+    #-----------------------------------------------------#
+    - endpoints: ["CORE-P1:eth5", "BNG-2:eth5"]
+      vars:
+        port: [1/1/c5, 1/1/c5]
+        clab_link_ip: 10.140.253.12/31
+    #-----------------------------------------------------#
+    - endpoints: ["CORE-P2:eth5", "BNG-1:eth5"]
+      vars:
+        port: [1/1/c5, 1/1/c5]
+        clab_link_ip: 10.140.253.14/31
+    #-----------------------------------------------------#
+    - endpoints: ["CORE-P2:eth4", "BNG-2:eth4"]
+      vars:
+        port: [1/1/c4, 1/1/c4]
+        clab_link_ip: 10.140.253.16/31         
+        
+    #######################################################
+    ################ AGG - Client/Host ####################
+    #######################################################
+    - endpoints: ["AGG-1:eth1", "CLIENT-1:eth1"]
+    - endpoints: ["AGG-2:eth1", "CLIENT-1:eth2"]
+    
+    #######################################################
+    ################ BNG- Radius ##########################
+    #######################################################
+    - endpoints: ["BNG-1:eth2", "RADIUS:eth1"]
+    - endpoints: ["BNG-2:eth2", "RADIUS:eth2"]
+       
